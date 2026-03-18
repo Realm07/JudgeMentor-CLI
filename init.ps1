@@ -1,18 +1,17 @@
-param (
-    [string]$SessionId
-)
-
-# 1. Ensure Session ID exists
+# Do NOT use param() here. 
+# We check if the user/webpage already declared $SessionId in the session.
 if (-not $SessionId) {
     $SessionId = Read-Host "Enter your JudgeMentor Session ID"
 }
 
-# Replace this with your actual backend server URL
+# Replace this with your actual backend server URL (when built)
 $ApiUrl = "https://api.judgementor.ai/session/$SessionId"
 
 # Helper function to send real updates to your backend
 function Update-Status([string]$Message, [string]$State = "PROCESSING") {
     Write-Host "-> $Message" -ForegroundColor DarkGray
+    
+    # Payload for backend
     $payload = @{
         status = $Message
         state = $State
