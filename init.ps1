@@ -5,7 +5,7 @@ if (-not $SessionId) {
 }
 
 # Replace this with your actual backend server URL (when built)
-$ApiUrl = "https://api.judgementor.ai/session/$SessionId"
+$ApiUrl = "http://localhost:8000/session/$SessionId"
 
 # Helper function to send real updates to your backend
 function Update-Status([string]$Message, [string]$State = "PROCESSING") {
