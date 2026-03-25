@@ -1,11 +1,14 @@
-# Do NOT use param() here. 
+# --- JUDGEMENTOR CONFIG ---
+# For dev-bypass, change this URL to your ngrok or local backend address
+$BackendUrl = "https://a0ff-103-134-249-90.ngrok-free.app"
+
 # We check if the user/webpage already declared $SessionId in the session.
 if (-not $SessionId) {
     $SessionId = Read-Host "Enter your JudgeMentor Session ID"
 }
 
-# Replace this with your actual backend server URL (when built)
-$ApiUrl = "http://localhost:8000/session/$SessionId"
+$ApiUrl = "$BackendUrl/session/$SessionId"
+$UploadUrl = "$BackendUrl/upload/$SessionId"
 
 # Helper function to send real updates to your backend
 function Update-Status([string]$Message, [string]$State = "PROCESSING") {
@@ -58,10 +61,25 @@ Update-Status "Redacting PII & Proprietary Keys..."
 Start-Sleep -Seconds 2 # Simulating the redaction processing time
 
 Update-Status "Transmitting $($File.Name) to server..."
-Start-Sleep -Seconds 3 # Simulating upload time
+try {
+    # Using curl.exe for multipart upload as it's built into Windows 10/11 
+    # and more reliable across PowerShell versions than Invoke-RestMethod for files.
+    $curlOutput = curl.exe -s -X POST -F "file=@$($File.FullName)" $UploadUrl
+    
+    # Check if the response indicates success
+    if ($curlOutput -like "*success*") {
+        # Continue to next step
+    } else {
+        throw "Server returned an error: $curlOutput"
+    }
+} catch {
+    Update-Status "Error: Failed to transmit file ($($_.Exception.Message))." "ERROR"
+    Write-Host "[!] Transmission failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit
+}
 
 Update-Status "Analysing Repository Structure..."
-Start-Sleep -Seconds 3 # Simulating analysis time
+Start-Sleep -Seconds 2
 
-Update-Status "Report Ready. Redirecting..." "COMPLETE"
-Write-Host "`n[SUCCESS] Analysis Complete. Check your browser." -ForegroundColor Green
+Update-Status "Report Ready. Refresh dashboard at https://judgementor-web.vercel.app/" "COMPLETE"
+Write-Host "`n[SUCCESS] Analysis Complete. Review your report in the browser." -ForegroundColor Green
